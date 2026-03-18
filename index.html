@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다솔 & 한교의 결혼식에 초대합니다</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Italiana:ital@0;1&family=Noto+Sans+KR:wght@100;300;400;500&family=Noto+Serif+KR:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <!-- 카카오톡 공유 SDK -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" integrity="sha384-l+xbElFSnPZ2rnmSzgVJEn6PDD83M+qLF7K67nyY6eIheAdwAXM71JI7mX7qo96L" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --ink:       #2c2c2c;
+            --ink-muted: #555555;
+            --ink-soft:  #888888;
+            --ink-faint: #aaaaaa;
+            --bg-paper:  #ffffff;
+            --bg-stone:  #f5f4f2;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 300;
+            background-color: #eceae7;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Italiana — 영문 디스플레이 타이틀 전용 */
+        .font-display { font-family: 'Italiana', serif; }
+        /* Noto Serif KR — 한글 섹션 제목·이름·격식 있는 요소 */
+        .font-serif   { font-family: 'Noto Serif KR', serif; }
+
+        /* ── 스크롤 페이드인 ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-delay-1 { transition-delay: 0.15s; }
+        .reveal-delay-2 { transition-delay: 0.3s; }
+        .reveal-delay-3 { transition-delay: 0.45s; }
+
+        /* ── 히어로 초기 애니메이션 ── */
+        @keyframes heroFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .hero-1 { animation: heroFade 1s ease-out 0.3s both; }
+        .hero-2 { animation: heroFade 1s ease-out 0.6s both; }
+        .hero-3 { animation: heroFade 1s ease-out 0.9s both; }
+        .hero-4 { animation: heroFade 1s ease-out 1.2s both; }
+        .hero-5 { animation: heroFade 1s ease-out 1.5s both; }
+
+        /* ── 폴라로이드 ── */
+        .polaroid {
+            background: white;
+            padding: 10px 10px 32px 10px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .polaroid:hover {
+            transform: scale(1.06) translateY(-8px) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+            z-index: 50;
+        }
+
+        /* ── 갤러리 마스크 ── */
+        .gallery-mask {
+            mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+        }
+
+        /* ── 아코디언 (CSS grid trick, Alpine x-collapse 불필요) ── */
+        .accordion-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .accordion-body.open {
+            grid-template-rows: 1fr;
+        }
+        .accordion-inner { overflow: hidden; }
+
+        /* ── 토스트 ── */
+        #toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--ink);
+            color: white;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            padding: 10px 22px;
+            border-radius: 999px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            white-space: nowrap;
+            z-index: 9999;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── 지도 버튼 ── */
+        .map-btn { transition: background 0.2s, border-color 0.2s; }
+        .map-btn:hover { background: white; }
+
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="toast">복사되었습니다</div>
+
+<!-- 전체 컨테이너 -->
+<div class="max-w-[450px] mx-auto bg-[var(--bg-paper)] min-h-screen shadow-2xl relative overflow-x-hidden">
+
+    <!-- ══════════════════════════════
+         1. 히어로
+    ══════════════════════════════ -->
+    <section class="relative min-h-screen flex flex-col items-center pt-24 pb-16 px-8 text-center bg-[var(--bg-stone)]">
+        <div class="space-y-10 w-full">
+
+            <div class="hero-1">
+                <!-- Italiana: 우아한 영문 디스플레이 -->
+                <h1 class="font-display italic text-[38px] text-[var(--ink)]">
+                    Wedding Invitation
+                </h1>
+            </div>
+
+            <!-- [수정] 히어로 이미지: images/hero.jpg 파일을 넣으세요 -->
+            <div class="hero-2 mx-auto w-60 h-60 p-[6px] border border-black/8 bg-white shadow-md">
+                <img src="images/hero.jpg"
+                     alt="Wedding"
+                     class="w-full h-full object-cover">
+            </div>
+
+            <div class="hero-3 space-y-3">
+                <!-- [수정] 신랑 신부 이름 — Noto Serif KR -->
+                <p class="font-serif text-[16px] font-light tracking-[0.25em] text-[var(--ink)]">다솔 &amp; 한교</p>
+                <!-- [수정] 날짜 — Noto Sans KR 정보성 -->
+                <p class="text-[13px] font-light tracking-[0.35em] text-[var(--ink-soft)]">2026. 07. 05 &nbsp;·&nbsp; 일요일 낮 2시</p>
+            </div>
+
+            <div class="hero-4 max-w-[240px] mx-auto">
+                <p class="text-[10px] leading-loose text-[var(--ink-faint)] font-light tracking-[0.12em]">
+                    We invite you to celebrate<br>the beginning of our new journey.
+                </p>
+            </div>
+
+            <div class="hero-5 pt-8 flex justify-center">
+                <i data-lucide="chevron-down" class="text-gray-300 animate-bounce"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         2. 폴라로이드
+    ══════════════════════════════ -->
+    <section class="py-16 px-8 overflow-hidden bg-white">
+        <div class="reveal relative h-[300px] max-w-[290px] mx-auto">
+            <!-- [수정] 폴라로이드 이미지 & 캡션 -->
+            <!-- 왼쪽 폴라로이드: images/polaroid1.jpg -->
+            <div class="polaroid absolute top-0 left-0 -rotate-6 w-[168px] z-10">
+                <img src="images/polaroid1.jpg"
+                     alt="Our Story 1"
+                     class="w-full aspect-[3/4] object-cover">
+                <!-- [수정] 폴라로이드 캡션 -->
+                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">First Date, 2022</p>
+            </div>
+            <!-- 오른쪽 폴라로이드: images/polaroid2.jpg -->
+            <div class="polaroid absolute bottom-0 right-0 rotate-6 w-[168px] z-0">
+                <img src="images/polaroid2.jpg"
+                     alt="Our Story 2"
+                     class="w-full aspect-[3/4] object-cover">
+                <!-- [수정] 폴라로이드 캡션 -->
+                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">Proposal Day, 2025</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         3. 초대 문구
+    ══════════════════════════════ -->
+    <section class="py-20 px-8 text-center bg-[var(--bg-stone)]">
+        <div class="reveal">
+            <!-- Noto Serif KR: 감성적인 한글 섹션 제목 -->
+            <h2 class="font-serif text-[26px] font-light mb-10 text-[var(--ink)]">초대합니다</h2>
+        </div>
+
+        <!-- [수정] 초대 문구 — Noto Serif KR, 서정적인 분위기 -->
+        <div class="reveal reveal-delay-1 space-y-5 font-serif font-light text-[15px] leading-9 text-[var(--ink-muted)]">
+            <p>서로가 마주 보며 다져온 사랑을</p>
+            <p>이제는 한 곳을 바라보며</p>
+            <p>큰 사랑으로 키워나가려 합니다.</p>
+            <p>저희의 새로운 출발을 축복해 주시면</p>
+            <p>더없는 기쁨으로 간직하겠습니다.</p>
+        </div>
+
+        <!-- [수정] 혼주 및 신랑신부 성함 -->
+        <div class="reveal reveal-delay-2 pt-14 space-y-4">
+            <div class="flex justify-center items-baseline gap-3">
+                <!-- 혼주 — Sans 보조 -->
+                <span class="text-[13px] font-light text-[var(--ink-soft)]">김철수 · 이영희</span>
+                <span class="text-[11px] text-[var(--ink-faint)]">의 아들</span>
+                <!-- 신랑 이름 — Serif 강조 -->
+                <span class="font-serif text-[18px] font-normal tracking-wider text-[var(--ink)]">한교</span>
+            </div>
+            <div class="flex justify-center items-baseline gap-3">
+                <span class="text-[13px] font-light text-[var(--ink-soft)]">박민수 · 최지혜</span>
+                <span class="text-[11px] text-[var(--ink-faint)]">의 딸</span>
+                <span class="font-serif text-[18px] font-normal tracking-wider text-[var(--ink)]">다솔</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         4. 일정 및 장소
+    ══════════════════════════════ -->
+    <section class="py-20 px-8 bg-[var(--bg-stone)]">
+        <div class="reveal">
+            <!-- Noto Serif KR: 섹션 제목 -->
+            <h2 class="font-serif text-[26px] font-light text-center mb-14 text-[var(--ink)]">일정 및 장소</h2>
+        </div>
+
+        <div class="reveal reveal-delay-1 space-y-10">
+            <div class="flex gap-5">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white">
+                    <i data-lucide="calendar" size="16" stroke-width="1.5" class="text-[var(--ink-soft)]"></i>
+                </div>
+                <div>
+                    <!-- 소제목 — Serif -->
+                    <h3 class="font-serif text-[15px] font-normal mb-1.5 text-[var(--ink)]">일시</h3>
+                    <!-- 내용 — Sans -->
+                    <p class="text-[13px] font-light text-[var(--ink-muted)]">2026년 7월 5일 일요일 낮 2시</p>
+                </div>
+            </div>
+
+            <div class="flex gap-5">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white">
+                    <i data-lucide="map-pin" size="16" stroke-width="1.5" class="text-[var(--ink-soft)]"></i>
+                </div>
+                <div>
+                    <h3 class="font-serif text-[15px] font-normal mb-1.5 text-[var(--ink)]">장소</h3>
+                    <p class="text-[13px] font-light text-[var(--ink-muted)]">로프트가든 344</p>
+                    <p class="text-[12px] font-light text-[var(--ink-faint)] mt-1">서울 양천구 오목로 344 청학빌딩 10층</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 지도 미리보기 -->
+        <!-- 카카오맵 지도 -->
+        <div class="reveal reveal-delay-2 mt-12 rounded overflow-hidden border border-gray-100">
+            <div id="daumRoughmapContainer1773830771304" class="root_daum_roughmap root_daum_roughmap_landing"></div>
+            <script charset="UTF-8" class="daum_roughmap_loader_script" src="https://ssl.daumcdn.net/dmaps/map_js_init/roughmapLoader.js"></script>
+            <script charset="UTF-8">
+                new daum.roughmap.Lander({
+                    "timestamp" : "1773830771304",
+                    "key" : "j6veo6f2jyf",
+                    "mapWidth" : "450",
+                    "mapHeight" : "360"
+                }).render();
+            </script>
+        </div>
+
+        <!-- 지도 앱 연결 버튼 -->
+        <div class="reveal reveal-delay-2 mt-3 grid grid-cols-2 gap-2">
+            <!-- [수정] 장소명이 실제 검색어로 반영됨 -->
+            <a href="https://map.naver.com/v5/search/로프트가든344" target="_blank"
+               class="map-btn flex items-center justify-center gap-1.5 py-3 border border-gray-200 rounded text-[12px] text-[var(--ink-muted)] tracking-tight bg-[var(--bg-stone)]">
+                <i data-lucide="navigation" size="10" stroke-width="1.5"></i>
+                네이버 지도
+            </a>
+            <a href="https://map.kakao.com/link/search/로프트가든344" target="_blank"
+               class="map-btn flex items-center justify-center gap-1.5 py-3 border border-gray-200 rounded text-[12px] text-[var(--ink-muted)] tracking-tight bg-[var(--bg-stone)]">
+                <i data-lucide="navigation" size="10" stroke-width="1.5"></i>
+                카카오 맵
+            </a>
+        </div>
+
+        <!-- 교통 안내 -->
+        <div class="reveal reveal-delay-3 mt-12 space-y-8">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="train-front" size="13" stroke-width="1.5" class="text-[var(--ink-soft)]"></i>
+                    <!-- 소제목 — Sans medium -->
+                    <span class="text-[12px] font-medium tracking-widest text-[var(--ink)] uppercase">지하철</span>
+                </div>
+                <p class="text-[13px] font-light leading-relaxed text-[var(--ink-muted)] pl-5">
+                    5호선 오목교역 7번출구 앞
+                </p>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="car" size="13" stroke-width="1.5" class="text-[var(--ink-soft)]"></i>
+                    <span class="text-[12px] font-medium tracking-widest text-[var(--ink)] uppercase">주차 안내</span>
+                </div>
+                <div class="text-[13px] font-light leading-relaxed text-[var(--ink-muted)] pl-5 space-y-1">
+                    <p>전용주차장 · 서울 양천구 오목로 344 청학빌딩 (2시간 무료)</p>
+                    <p>공영주차장 · 서울 양천구 목동동로 298 (3시간 무료)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         5. 갤러리
+         gallery1.jpg ~ gallery30.jpg 중 존재하는 파일만 자동으로 표시됩니다.
+         파일을 추가/삭제해도 코드 수정 없이 자동 반영됩니다.
+    ══════════════════════════════ -->
+    <section class="py-20 bg-[var(--bg-stone)]"
+        x-data="{
+            selected: null,
+            expanded: false,
+            images: [],
+            async init() {
+                const candidates = Array.from({length: 30}, (_, i) => 'images/gallery' + (i + 1) + '.jpg');
+                const results = await Promise.all(
+                    candidates.map(src =>
+                        new Promise(resolve => {
+                            const img = new Image();
+                            img.onload  = () => resolve(src);
+                            img.onerror = () => resolve(null);
+                            img.src = src;
+                        })
+                    )
+                );
+                this.images = results.filter(Boolean);
+            }
+        }"
+        x-init="init()">
+
+        <div class="reveal">
+            <h2 class="font-serif text-[26px] font-light text-center mb-14 text-[var(--ink)]">갤러리</h2>
+        </div>
+
+        <div class="reveal reveal-delay-1 relative px-4">
+            <!-- 그리드 -->
+            <div :class="expanded ? '' : 'max-h-[380px] overflow-hidden gallery-mask'">
+                <div class="grid grid-cols-3 gap-1.5">
+                    <template x-for="(src, index) in images" :key="index">
+                        <div @click="selected = index"
+                             class="aspect-square bg-stone-200 cursor-pointer overflow-hidden">
+                            <img :src="src"
+                                 class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110">
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 더 보기 버튼 (9장 초과일 때만 표시) -->
+            <div class="mt-6 text-center" x-show="!expanded && images.length > 9">
+                <button @click="expanded = true"
+                        class="text-[11px] uppercase tracking-[0.3em] text-[var(--ink-muted)] border border-gray-200 px-6 py-2.5 rounded-full hover:bg-white transition-colors">
+                    더 보기
+                </button>
+            </div>
+        </div>
+
+        <!-- 라이트박스 -->
+        <div x-show="selected !== null"
+             x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+             @keydown.escape.window="selected = null"
+             @keydown.arrow-left.window="selected = (selected - 1 + images.length) % images.length"
+             @keydown.arrow-right.window="selected = (selected + 1) % images.length">
+
+            <button @click="selected = null"
+                    class="absolute top-6 right-6 text-white/50 hover:text-white p-2 z-[110] transition-colors">
+                <i data-lucide="x" size="28" stroke-width="1.5"></i>
+            </button>
+            <button @click="selected = (selected - 1 + images.length) % images.length"
+                    class="absolute left-3 text-white/30 hover:text-white p-4 z-[110] transition-colors">
+                <i data-lucide="chevron-left" size="36" stroke-width="1"></i>
+            </button>
+            <button @click="selected = (selected + 1) % images.length"
+                    class="absolute right-3 text-white/30 hover:text-white p-4 z-[110] transition-colors">
+                <i data-lucide="chevron-right" size="36" stroke-width="1"></i>
+            </button>
+
+            <div class="p-6 max-w-full max-h-full flex items-center justify-center" @click="selected = null">
+                <img :src="selected !== null ? images[selected] : ''"
+                     class="max-w-full max-h-[85vh] object-contain pointer-events-none"
+                     @click.stop>
+            </div>
+
+            <div class="absolute bottom-8 text-white/30 text-[12px] font-light tracking-widest">
+                <span x-text="(selected ?? 0) + 1"></span> / <span x-text="images.length"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         6. 마음 전하실 곳 (계좌)
+    ══════════════════════════════ -->
+    <section class="py-20 px-8 bg-white">
+        <div class="reveal text-center mb-12">
+            <h2 class="font-serif text-[26px] font-light mb-4 text-[var(--ink)]">마음 전하실 곳</h2>
+            <!-- 안내 문구 — Sans, 가장 약하게 -->
+            <p class="text-[12px] font-light text-[var(--ink-faint)] leading-relaxed">
+                직접 축하를 전하지 못하는 분들을 위해<br>
+                부득이하게 계좌번호를 기재하게 되었습니다.<br>
+                넓은 마음으로 양해 부탁드립니다.
+            </p>
+        </div>
+
+        <div class="reveal reveal-delay-1 space-y-0">
+
+            <!-- 신랑측 -->
+            <div class="border-b border-gray-100 py-4">
+                <button onclick="toggleAccordion('groom')"
+                        class="w-full flex justify-between items-center text-left py-1">
+                    <!-- 아코디언 제목 — Serif -->
+                    <span class="font-serif text-[16px] font-light text-[var(--ink)]">신랑 마음 보내실 곳</span>
+                    <span id="groom-icon" class="text-[var(--ink-faint)] transition-transform duration-300">
+                        <i data-lucide="chevron-down" size="16"></i>
+                    </span>
+                </button>
+                <div id="groom-body" class="accordion-body">
+                    <div class="accordion-inner">
+                        <div class="pt-4 space-y-3 pb-2">
+                            <div class="bg-[var(--bg-stone)] p-4 rounded flex justify-between items-center">
+                                <div>
+                                    <!-- 은행명 — Sans 레이블 -->
+                                    <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">신한은행</p>
+                                    <!-- 계좌번호 — mono -->
+                                    <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">110-123-456789</p>
+                                    <!-- 예금주 — Sans -->
+                                    <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 서한교</p>
+                                </div>
+                                <button onclick="copyText('110-123-456789')"
+                                        class="text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors p-2">
+                                    <i data-lucide="copy" size="15"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 신부측 -->
+            <div class="border-b border-gray-100 py-4">
+                <button onclick="toggleAccordion('bride')"
+                        class="w-full flex justify-between items-center text-left py-1">
+                    <span class="font-serif text-[16px] font-light text-[var(--ink)]">신부 마음 보내실 곳</span>
+                    <span id="bride-icon" class="text-[var(--ink-faint)] transition-transform duration-300">
+                        <i data-lucide="chevron-down" size="16"></i>
+                    </span>
+                </button>
+                <div id="bride-body" class="accordion-body">
+                    <div class="accordion-inner">
+                        <div class="pt-4 space-y-3 pb-2">
+                            <div class="bg-[var(--bg-stone)] p-4 rounded flex justify-between items-center">
+                                <div>
+                                    <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">우리은행</p>
+                                    <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">1002-123-456789</p>
+                                    <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 김다솔</p>
+                                </div>
+                                <button onclick="copyText('1002-123-456789')"
+                                        class="text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors p-2">
+                                    <i data-lucide="copy" size="15"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         7. 공유 & 푸터
+    ══════════════════════════════ -->
+    <footer class="py-20 text-center border-t border-gray-50 bg-[var(--bg-stone)]">
+        <div class="reveal">
+            <!-- 푸터 이름 — Italiana 디스플레이 -->
+            <p class="font-display text-[28px] text-[var(--ink)] mb-2">Dasol &amp; Hangyo</p>
+            <!-- Thank You — Sans 레이블 -->
+            <p class="text-[9px] font-light tracking-[0.45em] text-[var(--ink-faint)] uppercase mb-14">Thank You</p>
+
+            <div class="flex justify-center gap-5">
+                <!-- 카카오톡 공유 -->
+                <button onclick="shareKakao()" class="flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
+                        <img src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaotalk_sharing_btn_medium.png"
+                             class="w-6 h-6" alt="카카오">
+                    </div>
+                    <span class="text-[9px] font-light text-[var(--ink-faint)] tracking-widest uppercase">카톡 공유</span>
+                </button>
+
+                <!-- 링크 복사 -->
+                <button onclick="copyText(window.location.href)" class="flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
+                        <i data-lucide="link" size="16" class="text-[var(--ink-soft)]"></i>
+                    </div>
+                    <span class="text-[9px] font-light text-[var(--ink-faint)] tracking-widest uppercase">링크 복사</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+</div><!-- /컨테이너 끝 -->
+
+<script>
+    // ── 아이콘 초기화 ──
+    lucide.createIcons();
+
+    // ── 스크롤 페이드인 (Intersection Observer) ──
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── 아코디언 (Alpine 없이 순수 JS, x-collapse 의존성 제거) ──
+    function toggleAccordion(id) {
+        const body = document.getElementById(id + '-body');
+        const icon = document.getElementById(id + '-icon');
+        const isOpen = body.classList.contains('open');
+
+        // 다른 항목 닫기
+        ['groom', 'bride'].forEach(key => {
+            if (key !== id) {
+                document.getElementById(key + '-body').classList.remove('open');
+                document.getElementById(key + '-icon').style.transform = 'rotate(0deg)';
+            }
+        });
+
+        body.classList.toggle('open', !isOpen);
+        icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    // ── 토스트 복사 ──
+    function copyText(text) {
+        const toast = document.getElementById('toast');
+        const showToast = () => {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        };
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(showToast);
+        } else {
+            // 구형 브라우저 대응
+            const el = document.createElement('textarea');
+            el.value = text;
+            el.style.position = 'fixed';
+            el.style.opacity = '0';
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast();
+        }
+    }
+
+    // ── 카카오 공유 ──
+    // [수정 필요] https://developers.kakao.com 에서 JavaScript 키 발급 후 아래에 입력
+    const KAKAO_JS_KEY = 'YOUR_KAKAO_JS_KEY';
+
+    if (KAKAO_JS_KEY !== 'YOUR_KAKAO_JS_KEY') {
+        Kakao.init(KAKAO_JS_KEY);
+    }
+
+    function shareKakao() {
+        if (!Kakao.isInitialized()) {
+            // 키 미설정 시 링크 복사로 대체
+            copyText(window.location.href);
+            return;
+        }
+        Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+                // [수정] 카카오 공유 미리보기 내용
+                title: '다솔 & 한교 결혼식에 초대합니다 💍',
+                description: '2026년 7월 5일 일요일 낮 2시\n로프트가든 344',
+                imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop',
+                link: {
+                    mobileWebUrl: window.location.href,
+                    webUrl: window.location.href,
+                },
+            },
+            buttons: [{
+                title: '모바일 청첩장 보기',
+                link: {
+                    mobileWebUrl: window.location.href,
+                    webUrl: window.location.href,
+                },
+            }],
+        });
+    }
+</script>
+</body>
+</html>
