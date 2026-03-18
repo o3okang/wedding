@@ -55,6 +55,12 @@
         .reveal-delay-2 { transition-delay: 0.3s; }
         .reveal-delay-3 { transition-delay: 0.45s; }
 
+        /* ── 타이핑 커서 깜빡임 ── */
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 0.5; }
+            50%       { opacity: 0; }
+        }
+
         /* ── 히어로 초기 애니메이션 ── */
         @keyframes heroFade {
             from { opacity: 0; transform: translateY(20px); }
@@ -69,12 +75,17 @@
         /* ── 폴라로이드 ── */
         .polaroid {
             background: white;
-            padding: 10px 10px 32px 10px;
+            padding: 10px 10px 18px 10px;
             box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s ease;
         }
-        .polaroid:hover {
-            transform: scale(1.06) translateY(-8px) !important;
+        #polaroid-left:hover {
+            transform: rotate(-6deg) scale(1.06) translateY(-6px) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+            z-index: 50;
+        }
+        #polaroid-right:hover {
+            transform: rotate(6deg) scale(1.06) translateY(-6px) !important;
             box-shadow: 0 20px 40px rgba(0,0,0,0.18);
             z-index: 50;
         }
@@ -139,10 +150,10 @@
     <section class="relative min-h-screen flex flex-col items-center pt-24 pb-16 px-8 text-center bg-[var(--bg-stone)]">
         <div class="space-y-10 w-full">
 
-            <div class="hero-1">
+            <div>
                 <!-- Italiana: 우아한 영문 디스플레이 -->
                 <h1 class="font-display italic text-[38px] text-[var(--ink)]">
-                    Wedding Invitation
+                    <span id="typing-title"></span><span id="typing-cursor" style="display:inline-block;width:2px;height:0.9em;background:currentColor;margin-left:2px;vertical-align:middle;animation:cursorBlink 0.8s step-end infinite;opacity:0.5"></span>
                 </h1>
             </div>
 
@@ -175,24 +186,21 @@
     <!-- ══════════════════════════════
          2. 폴라로이드
     ══════════════════════════════ -->
-    <section class="py-16 px-8 overflow-hidden bg-white">
+    <section class="pt-10 pb-6 px-8 overflow-hidden bg-white">
         <div class="reveal relative h-[300px] max-w-[290px] mx-auto">
-            <!-- [수정] 폴라로이드 이미지 & 캡션 -->
             <!-- 왼쪽 폴라로이드: images/polaroid1.jpg -->
-            <div class="polaroid absolute top-0 left-0 -rotate-6 w-[168px] z-10">
+            <div id="polaroid-left" class="polaroid absolute top-0 left-0 -rotate-6 w-[168px] z-10">
                 <img src="images/polaroid1.jpg"
                      alt="Our Story 1"
                      class="w-full aspect-[3/4] object-cover">
-                <!-- [수정] 폴라로이드 캡션 -->
-                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">First Date, 2022</p>
+                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">February 13, 2026</p>
             </div>
             <!-- 오른쪽 폴라로이드: images/polaroid2.jpg -->
-            <div class="polaroid absolute bottom-0 right-0 rotate-6 w-[168px] z-0">
+            <div id="polaroid-right" class="polaroid absolute bottom-0 right-0 rotate-6 w-[168px] z-0">
                 <img src="images/polaroid2.jpg"
                      alt="Our Story 2"
                      class="w-full aspect-[3/4] object-cover">
-                <!-- [수정] 폴라로이드 캡션 -->
-                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">Proposal Day, 2025</p>
+                <p class="mt-2 text-[9.5px] text-center text-[var(--ink-faint)] tracking-widest">February 13, 2026</p>
             </div>
         </div>
     </section>
@@ -218,14 +226,13 @@
         <div class="reveal reveal-delay-2 pt-14 space-y-4">
             <div class="flex justify-center items-baseline gap-3">
                 <!-- 혼주 — Sans 보조 -->
-                <span class="text-[13px] font-light text-[var(--ink-soft)]">서재완 · 이학련</span>
-                <span class="text-[11px] text-[var(--ink-faint)]">의 아들</span>
-                <!-- 신랑 이름 — Serif 강조 -->
+                <span class="text-[15px] font-light text-[var(--ink-soft)]">서재완 · 이학련</span>
+                <span class="text-[13px] text-[var(--ink-faint)]">의 아들</span>
                 <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">한교</span>
             </div>
             <div class="flex justify-center items-baseline gap-3">
-                <span class="text-[13px] font-light text-[var(--ink-soft)]">김성로 · 박정은</span>
-                <span class="text-[11px] text-[var(--ink-faint)]">의 딸</span>
+                <span class="text-[15px] font-light text-[var(--ink-soft)]">김성로 · 박정은</span>
+                <span class="text-[13px] text-[var(--ink-faint)]">의 딸</span>
                 <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">다솔</span>
             </div>
         </div>
@@ -250,6 +257,8 @@
                     <h3 class="font-kr-serif text-[15px] font-normal mb-1.5 text-[var(--ink)]">일시</h3>
                     <!-- 내용 — Sans -->
                     <p class="text-[13px] font-light text-[var(--ink-muted)]">2026년 7월 5일 일요일 낮 2시</p>
+                    <!-- D-Day 카운터 -->
+                    <p id="dday-counter" class="text-[12.5px] font-light tracking-[0.2em] text-[var(--ink-soft)] mt-1.5"></p>
                 </div>
             </div>
 
@@ -490,6 +499,13 @@
             </div>
 
         </div>
+
+        <!-- 화환 사양 문구 -->
+        <div class="reveal reveal-delay-2 mt-10 text-center">
+            <p class="text-[12px] font-light leading-relaxed text-[var(--ink-faint)] tracking-[0.04em]">
+                화환은 정중히 사양합니다.<br>마음만으로도 충분히 감사합니다.
+            </p>
+        </div>
     </section>
 
     <!-- ══════════════════════════════
@@ -519,6 +535,69 @@
 <script>
     // ── 아이콘 초기화 ──
     lucide.createIcons();
+
+    // ── 타이핑 효과 ──
+    (function() {
+        const el     = document.getElementById('typing-title');
+        const cursor = document.getElementById('typing-cursor');
+        if (!el || !cursor) return;
+        const text  = 'Wedding Invitation';
+        const delay = 900;   // 시작 딜레이 (ms)
+        const speed = 72;    // 글자당 속도 (ms)
+        const pauseAfter = 1800; // 완성 후 커서 유지 시간 (ms)
+        let i = 0;
+        setTimeout(() => {
+            const timer = setInterval(() => {
+                el.textContent = text.slice(0, ++i);
+                if (i === text.length) {
+                    clearInterval(timer);
+                    setTimeout(() => { cursor.style.display = 'none'; }, pauseAfter);
+                }
+            }, speed);
+        }, delay);
+    })();
+
+    // ── 폴라로이드 어포던스 힌트 ──
+    (function() {
+        const left  = document.getElementById('polaroid-left');
+        const right = document.getElementById('polaroid-right');
+        if (!left || !right) return;
+
+        const hint = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                hint.disconnect();
+
+                setTimeout(() => {
+                    left.style.transform  = 'rotate(-11deg) translate(-4px, -3px)';
+                    right.style.transform = 'rotate(11deg) translate(4px, 3px)';
+                }, 400);
+
+                setTimeout(() => {
+                    left.style.transform  = '';
+                    right.style.transform = '';
+                }, 1100);
+            });
+        }, { threshold: 0.6 });
+
+        hint.observe(left);
+    })();
+    (function() {
+        const el = document.getElementById('dday-counter');
+        if (!el) return;
+        const wedding = new Date('2026-07-05T14:00:00');
+        const now = new Date();
+        const diff = Math.ceil((wedding - now) / (1000 * 60 * 60 * 24));
+        if (diff > 0) {
+            el.textContent = 'D - ' + diff;
+        } else if (diff === 0) {
+            el.textContent = '오늘, 저희 결혼합니다 ♡';
+            el.style.color = 'var(--ink-muted)';
+            el.style.letterSpacing = '0.1em';
+        } else {
+            el.textContent = 'D + ' + Math.abs(diff);
+        }
+    })();
 
     // ── 스크롤 페이드인 (Intersection Observer) ──
     const observer = new IntersectionObserver((entries) => {
