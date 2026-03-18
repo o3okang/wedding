@@ -392,27 +392,34 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
+             style="touch-action: none;"
              class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
              @keydown.escape.window="selected = null"
              @keydown.arrow-left.window="selected = (selected - 1 + images.length) % images.length"
              @keydown.arrow-right.window="selected = (selected + 1) % images.length">
 
             <button @click="selected = null"
-                    class="absolute top-6 right-6 text-white/50 hover:text-white p-2 z-[110] transition-colors">
+                    class="absolute top-6 right-6 text-white/50 hover:text-white p-3 z-[110] transition-colors">
                 <i data-lucide="x" size="28" stroke-width="1.5"></i>
             </button>
-            <button @click="selected = (selected - 1 + images.length) % images.length"
-                    class="absolute left-3 text-white/30 hover:text-white p-4 z-[110] transition-colors">
-                <i data-lucide="chevron-left" size="36" stroke-width="1"></i>
+
+            <!-- 왼쪽 터치 영역 -->
+            <button @click.stop="selected = (selected - 1 + images.length) % images.length"
+                    style="touch-action: manipulation;"
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-20 h-32 z-[110] flex items-center justify-start pl-3">
+                <i data-lucide="chevron-left" size="44" stroke-width="1" class="text-white/40"></i>
             </button>
-            <button @click="selected = (selected + 1) % images.length"
-                    class="absolute right-3 text-white/30 hover:text-white p-4 z-[110] transition-colors">
-                <i data-lucide="chevron-right" size="36" stroke-width="1"></i>
+            <!-- 오른쪽 터치 영역 -->
+            <button @click.stop="selected = (selected + 1) % images.length"
+                    style="touch-action: manipulation;"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 w-20 h-32 z-[110] flex items-center justify-end pr-3">
+                <i data-lucide="chevron-right" size="44" stroke-width="1" class="text-white/40"></i>
             </button>
 
             <div class="p-6 max-w-full max-h-full flex items-center justify-center" @click="selected = null">
                 <img :src="selected !== null ? images[selected] : ''"
                      class="max-w-full max-h-[85vh] object-contain pointer-events-none"
+                     style="touch-action: manipulation;"
                      @click.stop>
             </div>
 
