@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>다솔 & 한교의 결혼식에 초대합니다</title>
+    <title>결혼식에 초대합니다🌿</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -184,9 +184,9 @@
 
             <div class="hero-3 space-y-3">
                 <!-- [수정] 신랑 신부 이름 — Noto Serif KR -->
-                <p class="font-kr-serif text-[16px] font-light tracking-[0.25em] text-[var(--ink)]">다솔 &amp; 한교</p>
+                <p class="font-kr-serif text-[16px] font-light tracking-[0.25em] text-[var(--ink)]">한교 &amp; 다솔</p>
                 <!-- [수정] 날짜 — Noto Sans KR 정보성 -->
-                <p class="text-[13px] font-light tracking-[0.35em] text-[var(--ink-soft)]">2026. 07. 05 &nbsp;·&nbsp; 일요일 낮 2시</p>
+                <p class="text-[13px] font-light tracking-[0.35em] text-[var(--ink-soft)]">2026. 07. 05 &nbsp;·&nbsp; 일요일 2시</p>
             </div>
 
             <div class="hero-4 max-w-[240px] mx-auto">
@@ -204,7 +204,7 @@
     <!-- ══════════════════════════════
          2. 폴라로이드
     ══════════════════════════════ -->
-    <section class="pt-10 pb-6 px-8 overflow-hidden bg-white">
+    <section class="pt-10 pb-16 px-8 overflow-hidden bg-[var(--bg-stone)]">
         <div class="reveal relative h-[300px] max-w-[290px] mx-auto">
             <!-- 왼쪽 폴라로이드: images/polaroid1.jpg -->
             <div id="polaroid-left" class="polaroid absolute top-0 left-0 -rotate-6 w-[168px] z-10">
@@ -312,12 +312,12 @@
             <!-- [수정] 장소명이 실제 검색어로 반영됨 -->
             <a href="https://map.naver.com/v5/search/로프트가든344" target="_blank"
                class="map-btn flex items-center justify-center gap-1.5 py-3 border border-gray-200 rounded text-[12px] text-[var(--ink-muted)] tracking-tight bg-[var(--bg-stone)]">
-                <i data-lucide="navigation" size="10" stroke-width="1.5"></i>
+                <i data-lucide="navigation" size="12" stroke-width="1.5"></i>
                 네이버 지도
             </a>
             <a href="https://map.kakao.com/link/search/로프트가든344" target="_blank"
                class="map-btn flex items-center justify-center gap-1.5 py-3 border border-gray-200 rounded text-[12px] text-[var(--ink-muted)] tracking-tight bg-[var(--bg-stone)]">
-                <i data-lucide="navigation" size="10" stroke-width="1.5"></i>
+                <i data-lucide="navigation" size="12" stroke-width="1.5"></i>
                 카카오 맵
             </a>
         </div>
@@ -399,8 +399,24 @@
                  revealHeight: 800,
                  stepHeight: 800,
                  totalHeight: 99999,
-                 get isFullyVisible() { return this.revealHeight >= this.totalHeight; },
+                 _measured: false,
+                 get isFullyVisible() { return this._measured && this.revealHeight >= this.totalHeight; },
                  expand() { this.revealHeight += this.stepHeight; },
+                 measureHeight() {
+                     const grid = this.$refs.grid;
+                     if (!grid) return;
+                     // 이미지 로딩 완료 후 실제 높이 측정
+                     const imgs = grid.querySelectorAll('img');
+                     const promises = Array.from(imgs).map(img =>
+                         img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
+                     );
+                     Promise.all(promises).then(() => {
+                         this.$nextTick(() => {
+                             this.totalHeight = grid.scrollHeight;
+                             this._measured = true;
+                         });
+                     });
+                 },
                  // 1-3-2-3 패턴으로 이미지 그룹 생성
                  // 한 사이클: [1장, 3장, 2장, 3장] = 9장
                  get groups() {
@@ -418,7 +434,7 @@
                      return result;
                  }
              }"
-             x-init="setTimeout(() => { totalHeight = $refs.grid ? $refs.grid.scrollHeight : 99999; }, 800)">
+             x-init="$watch('images', () => { if (images.length > 0) $nextTick(() => measureHeight()); })">
 
             <!-- 그리드 래퍼: 높이 클립 + 하단 그라데이션 마스크 -->
             <div x-ref="grid"
