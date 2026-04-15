@@ -246,12 +246,12 @@
                 <!-- 혼주 — Sans 보조 -->
                 <span class="text-[15px] font-light text-[var(--ink-soft)]">서재완 · 이학련</span>
                 <span class="text-[13px] text-[var(--ink-faint)]">의 아들</span>
-                <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">한교</span>
+                <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">서한교</span>
             </div>
             <div class="flex justify-center items-baseline gap-3">
                 <span class="text-[15px] font-light text-[var(--ink-soft)]">김성로 · 박정은</span>
                 <span class="text-[13px] text-[var(--ink-faint)]">의 딸</span>
-                <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">다솔</span>
+                <span class="font-kr-serif text-[16px] font-normal tracking-wider text-[var(--ink)]">김다솔</span>
             </div>
         </div>
     </section>
@@ -393,37 +393,18 @@
             <h2 class="font-kr-serif text-[26px] font-light text-center mb-14 text-[var(--ink)]">갤러리</h2>
         </div>
 
-        <!-- ── 갤러리 그리드: 1-3-2-3 반복 패턴, 높이 기반 더 보기 ── -->
+
+        <!-- ── 갤러리 그리드: 1-3-2-3 반복 패턴 ── -->
         <div class="px-3"
              x-data="{
-                 revealHeight: 800,
-                 stepHeight: 800,
+                 expanded: false,
+                 clipHeight: 1400,
                  totalHeight: 99999,
-                 _measured: false,
-                 get isFullyVisible() { return this._measured && this.revealHeight >= this.totalHeight; },
-                 expand() { this.revealHeight += this.stepHeight; },
-                 measureHeight() {
-                     const grid = this.$refs.grid;
-                     if (!grid) return;
-                     // 이미지 로딩 완료 후 실제 높이 측정
-                     const imgs = grid.querySelectorAll('img');
-                     const promises = Array.from(imgs).map(img =>
-                         img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
-                     );
-                     Promise.all(promises).then(() => {
-                         this.$nextTick(() => {
-                             this.totalHeight = grid.scrollHeight;
-                             this._measured = true;
-                         });
-                     });
-                 },
-                 // 1-3-2-3 패턴으로 이미지 그룹 생성
-                 // 한 사이클: [1장, 3장, 2장, 3장] = 9장
+                 get isFullyVisible() { return this.expanded || this.totalHeight <= this.clipHeight; },
                  get groups() {
                      const pattern = [1, 3, 2, 3];
                      const result = [];
-                     let idx = 0;
-                     let p = 0;
+                     let idx = 0, p = 0;
                      while (idx < this.images.length) {
                          const count = pattern[p % pattern.length];
                          const chunk = this.images.slice(idx, idx + count).map((src, i) => ({ src, globalIdx: idx + i }));
@@ -434,18 +415,22 @@
                      return result;
                  }
              }"
-             x-init="$watch('images', () => { if (images.length > 0) $nextTick(() => measureHeight()); })">
+             x-init="$watch('images', () => {
+                 if (images.length > 0) $nextTick(() => {
+                     const grid = $refs.galleryGrid;
+                     if (!grid) return;
+                     const imgs = grid.querySelectorAll('img');
+                     Promise.all(Array.from(imgs).map(img =>
+                         img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
+                     )).then(() => $nextTick(() => { totalHeight = grid.scrollHeight; }));
+                 });
+             })">
 
-            <!-- 그리드 래퍼: 높이 클립 + 하단 그라데이션 마스크 -->
-            <div x-ref="grid"
-                 :style="`
-                     max-height: ${revealHeight}px;
-                     overflow: hidden;
-                     transition: max-height 0.8s cubic-bezier(0.22,1,0.36,1);
-                     -webkit-mask-image: ${isFullyVisible ? 'none' : 'linear-gradient(to bottom, black 80%, transparent 100%)'};
-                     mask-image: ${isFullyVisible ? 'none' : 'linear-gradient(to bottom, black 80%, transparent 100%)'};
-                 `">
-
+            <!-- 그리드 래퍼: 높이 클립 + 하단 그라데이션 -->
+            <div x-ref="galleryGrid"
+                 :style="isFullyVisible
+                     ? 'overflow: visible;'
+                     : 'max-height: ' + clipHeight + 'px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%); mask-image: linear-gradient(to bottom, black 75%, transparent 100%);'">
                 <template x-for="(group, gi) in groups" :key="gi">
                     <div :class="`grid gap-1.5 mb-1.5`"
                          :style="`grid-template-columns: repeat(${group.cols}, minmax(0, 1fr));`">
@@ -460,16 +445,14 @@
                 </template>
             </div>
 
-            <!-- 더 보기 버튼: 마스크 바깥에 위치 -->
+            <!-- 더 보기 버튼 -->
             <div class="mt-6 text-center" x-show="!isFullyVisible">
-                <button @click="expand()"
+                <button @click="expanded = true"
                         class="text-[11px] uppercase tracking-[0.3em] text-[var(--ink-muted)] border border-gray-200 px-6 py-2.5 rounded-full hover:bg-white transition-colors">
                     더 보기
                 </button>
             </div>
         </div>
-
-        <!-- 라이트박스 -->
         <div x-show="selected !== null"
              x-cloak
              x-transition:enter="transition ease-out duration-200"
@@ -478,11 +461,24 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             style="touch-action: none;"
+             x-data="{ swipeStartX: null }"
+             style="touch-action: pan-y;"
              class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
              @keydown.escape.window="selected = null"
              @keydown.arrow-left.window="selected = (selected - 1 + images.length) % images.length"
-             @keydown.arrow-right.window="selected = (selected + 1) % images.length">
+             @keydown.arrow-right.window="selected = (selected + 1) % images.length"
+             @touchstart.passive="swipeStartX = $event.touches[0].clientX"
+             @touchend.passive="
+                 if (swipeStartX !== null) {
+                     const dx = $event.changedTouches[0].clientX - swipeStartX;
+                     if (Math.abs(dx) > 40) {
+                         selected = dx < 0
+                             ? (selected + 1) % images.length
+                             : (selected - 1 + images.length) % images.length;
+                     }
+                     swipeStartX = null;
+                 }
+             ">
 
             <button @click="selected = null"
                     class="absolute top-6 right-6 text-white/50 hover:text-white p-3 z-[110] transition-colors">
@@ -491,13 +487,13 @@
 
             <button @click.stop="selected = (selected - 1 + images.length) % images.length"
                     style="touch-action: manipulation;"
-                    class="absolute left-0 top-1/2 -translate-y-1/2 w-20 h-32 z-[110] flex items-center justify-start pl-3">
-                <i data-lucide="chevron-left" size="44" stroke-width="1" class="text-white/40"></i>
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-24 h-40 z-[110] flex items-center justify-start pl-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <button @click.stop="selected = (selected + 1) % images.length"
                     style="touch-action: manipulation;"
-                    class="absolute right-0 top-1/2 -translate-y-1/2 w-20 h-32 z-[110] flex items-center justify-end pr-3">
-                <i data-lucide="chevron-right" size="44" stroke-width="1" class="text-white/40"></i>
+                    class="absolute right-0 top-1/2 -translate-y-1/2 w-24 h-40 z-[110] flex items-center justify-end pr-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
 
             <div class="p-6 max-w-full max-h-full flex items-center justify-center" @click="selected = null">
@@ -533,29 +529,35 @@
             <div class="border-b border-gray-100 py-4">
                 <button onclick="toggleAccordion('groom')"
                         class="w-full flex justify-between items-center text-left py-1">
-                    <!-- 아코디언 제목 — Serif -->
-                    <span class="font-kr-serif text-[16px] font-light text-[var(--ink)]">신랑 마음 보내실 곳</span>
+                    <span class="font-kr-serif text-[16px] font-light text-[var(--ink)]">신랑측 마음 전하실 곳</span>
                     <span id="groom-icon" class="text-[var(--ink-faint)] transition-transform duration-300">
                         <i data-lucide="chevron-down" size="16"></i>
                     </span>
                 </button>
                 <div id="groom-body" class="accordion-body">
                     <div class="accordion-inner">
-                        <div class="pt-4 space-y-3 pb-2">
-                            <div class="bg-[var(--bg-stone)] p-4 rounded flex justify-between items-center">
-                                <div>
-                                    <!-- 은행명 — Sans 레이블 -->
-                                    <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">카카오뱅크</p>
-                                    <!-- 계좌번호 — mono -->
-                                    <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">3333-04-1794393</p>
-                                    <!-- 예금주 — Sans -->
-                                    <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 서한교</p>
-                                </div>
-                                <button onclick="copyText('110-123-456789')"
-                                        class="text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors p-2">
-                                    <i data-lucide="copy" size="15"></i>
-                                </button>
-                            </div>
+                        <div class="pt-4 space-y-2.5 pb-2">
+                            <!-- 신랑 -->
+                            <button onclick="copyText('3333-04-1794393')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">카카오뱅크 · 신랑</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">3333-04-1794393</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 서한교</p>
+                            </button>
+                            <!-- 신랑 아버지 -->
+                            <button onclick="copyText('1002-381-640818')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">우리은행 · 신랑 아버지</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">1002-381-640818</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 서재완</p>
+                            </button>
+                            <!-- 신랑 어머니 -->
+                            <button onclick="copyText('833240131463')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">국민은행 · 신랑 어머니</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">833-24-0131-463</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 이학련</p>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -565,25 +567,35 @@
             <div class="border-b border-gray-100 py-4">
                 <button onclick="toggleAccordion('bride')"
                         class="w-full flex justify-between items-center text-left py-1">
-                    <span class="font-kr-serif text-[16px] font-light text-[var(--ink)]">신부 마음 보내실 곳</span>
+                    <span class="font-kr-serif text-[16px] font-light text-[var(--ink)]">신부측 마음 전하실 곳</span>
                     <span id="bride-icon" class="text-[var(--ink-faint)] transition-transform duration-300">
                         <i data-lucide="chevron-down" size="16"></i>
                     </span>
                 </button>
                 <div id="bride-body" class="accordion-body">
                     <div class="accordion-inner">
-                        <div class="pt-4 space-y-3 pb-2">
-                            <div class="bg-[var(--bg-stone)] p-4 rounded flex justify-between items-center">
-                                <div>
-                                    <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">카카오뱅크</p>
-                                    <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">3333-11-4201576</p>
-                                    <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 김다솔</p>
-                                </div>
-                                <button onclick="copyText('1002-123-456789')"
-                                        class="text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors p-2">
-                                    <i data-lucide="copy" size="15"></i>
-                                </button>
-                            </div>
+                        <div class="pt-4 space-y-2.5 pb-2">
+                            <!-- 신부 -->
+                            <button onclick="copyText('3333-11-4201576')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">카카오뱅크 · 신부</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">3333-11-4201576</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 김다솔</p>
+                            </button>
+                            <!-- 신부 아버지 -->
+                            <button onclick="copyText('15912093111')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">농협 · 신부 아버지</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">159-12-093111</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 김성로</p>
+                            </button>
+                            <!-- 신부 어머니 -->
+                            <button onclick="copyText('47591004268407')"
+                                    class="w-full text-left bg-[var(--bg-stone)] p-4 rounded active:bg-gray-100 transition-colors">
+                                <p class="text-[10px] font-light text-[var(--ink-faint)] mb-1.5 tracking-widest uppercase">하나은행 · 신부 어머니</p>
+                                <p class="font-mono text-[14px] text-[var(--ink)] tracking-tight">475-910042-68407</p>
+                                <p class="text-[12px] font-light text-[var(--ink-soft)] mt-1">예금주 · 박정은</p>
+                            </button>
                         </div>
                     </div>
                 </div>
